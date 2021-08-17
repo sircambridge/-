@@ -11,8 +11,11 @@ window.addEventListener('DOMContentLoaded', () => {
     // }
     // console.log(11123);
   
-    document.querySelector('#login').addEventListener('click', () => {
-      login();
+    document.querySelector('#login_old').addEventListener('click', () => {
+      login_old();
+    })
+    document.querySelector('#login_new').addEventListener('click', () => {
+      login_new();
     })
 
     document.querySelector('#popout').addEventListener('click', () => {
@@ -27,31 +30,14 @@ window.addEventListener('DOMContentLoaded', () => {
   
   const { ipcRenderer } = require('electron');
 
-  function login() {
-        // Some data that will be sent to the main process
-      let Data = {
-          message: "login",
-          someData: {}
-      };
-      // alert(1)
-      console.log("SENDING");
-      // Send information to the main process
-      // if a listener has been set, then the main process
-      // will react to the request !
-      ipcRenderer.send('request-mainprocess-action', Data);
-  }
+function login_old() {
+  ipcRenderer.send('request-mainprocess-action', { message: "login_old", someData: {} });
+}
+function login_new() {
+  ipcRenderer.send('request-mainprocess-action', { message: "login_new", someData: {} });
+}
 function popout() {
-    // Some data that will be sent to the main process
-  let Data = {
-      message: "popout",
-      someData: {}
-  };
-  // alert(1)
-  console.log("SENDING");
-  // Send information to the main process
-  // if a listener has been set, then the main process
-  // will react to the request !
-  ipcRenderer.send('request-mainprocess-action', Data);
+  ipcRenderer.send('request-mainprocess-action', { message: "popout", someData: {} });
 }
 
   function search() {

@@ -2,19 +2,9 @@
 <html>
   <head>
     <meta charset="UTF-8">
-    <title>💖</title>
+    <title>0.09</title>
     <link rel="stylesheet" href="index.css">
-  </head>
-  <body>
-    
-  </body>
-</html>
-
-
-<!DOCTYPE html>
-<html>
-  <head>
-    <title>Photon</title>
+ 
 
     <!-- Stylesheets -->
     <link rel="stylesheet" href="./css/photon.min.css">
@@ -36,7 +26,10 @@
                 <h3>💖松雪樓自動訂房係統</h3>
                 <p></p>
                 <!-- <button href="" id="commands" st>登入</button> -->
-                <button id="login" class="btn btn-large btn-default" style="width:100%">登入 <span class="icon icon-login"></span>  - 輸入（帳號 密碼 驗證碼）， 點登入就好</button>
+                 <!-- - 輸入（帳號 密碼 驗證碼）， 點登入就好-->
+                <button id="login_old" class="btn btn-large btn-default" style="width:30%">登入(舊) <span class="icon icon-login"></span></button>
+                <button id="login_new" class="btn btn-large btn-default" style="width:30%">登入 <span class="icon icon-login"></span></button>
+                <button id="popout" class="btn btn-large btn-default" style="width:35%">打開網頁 <span class="icon icon-publish"></span> </button>
                 <!-- <button class="btn btn-large btn-primary">Primary</button> -->
                 <br/>
                 <select id="day" class="form-control" style="width:85px">
@@ -88,20 +81,34 @@
                     <option value="11">11</option>
                     <option value="12">12</option>
                   </select>
-                  <select id="year" name="DOBYear" class="form-control" style="width:105px">
+                  <select id="year" class="form-control" style="width:105px">
                     <option>- 年 -</option>
                     <option value="2022">2022</option>
                     <option value="2021">2021</option>
                     <option value="2020">2020</option>
+                  </select><br/>
+                  <input type="radio" name="roomType" value="110" checked>
+                  松雪樓:4人套房 <select id="count110" class="form-control" style="width:90px">
+                    <option value="0" selected="selected">- 間 -</option>
+                    <option value="1">1間</option>
+                    <option value="2">2間</option>
+                    <option value="3">3間</option>
+                  </select><br/>
+                  <input type="radio" name="roomType" value="108" >
+                  松雪樓:景觀2人 <select id="count108" class="form-control" style="width:90px">
+                    <option value="0" selected="selected">- 間 -</option>
+                    <option value="1">1間</option>
+                    <option value="2">2間</option>
+                    <option value="3">3間</option>
                   </select>
-                  <button id="search" class="btn btn-large btn-primary" style="width:100%"><span class="icon icon-search"></span>SEARCH</button>
+                  <button id="search" class="btn btn-large btn-primary" style="width:100%;margin-top:10px;"><span class="icon icon-search"></span>SEARCH</button>
                   <h4 id="label2" style="color:red">
                     
                   </h4>
                   
                 <div class="checkbox">
                   <label>
-                    <input type="checkbox" id="retry"> 每十秒重試
+                    <input type="checkbox" id="retry"> 每三秒重試
                   </label>
                 </div>
                 <div class="checkbox">

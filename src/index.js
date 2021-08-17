@@ -98,11 +98,14 @@ const {ipcMain} = require('electron');
 // Attach listener in the main process with the given ID
 ipcMain.on('request-mainprocess-action', (event, arg) => {
   console.log(arg);
-  if(arg.message == 'login'){
-    // login()
+  if(arg.message == 'login_old'){
+    login()
+  }
+  if(arg.message == 'login_new'){
     login2Captcha();
   }
   if(arg.message == 'search'){
+    bookSuccess = false;
     search(arg.someData)
   }
   if(arg.message == 'popout'){
@@ -201,6 +204,7 @@ async function popout(params) {
 
 const util = require('util');
 const streamPipeline = util.promisify(require('stream').pipeline);
+
 const https = require('https');
 
 const httpsAgent = new https.Agent({ rejectUnauthorized: false });
@@ -290,9 +294,15 @@ async function login2Captcha() {
   const fname = 'octocat.png';
   fs.unlinkSync(fname)
   if (response.ok) {
-    streamPipeline(response.body, fs.createWriteStream(fname));
+    await streamPipeline(response.body, fs.createWriteStream(fname));
   }
-  await sleep(1000);
+
+  
+  while (!fs.existsSync('octocat.png')) {
+    console.log('doesnt exist! waiting 100ms');
+    await sleep(100);
+  }
+  await sleep(3000);
   
   const contents = fs.readFileSync(fname, {encoding: 'base64'});
 
@@ -385,7 +395,7 @@ async function loggedin(params) {
 
 const fetchit = require('node-fetch');
 const got = require('got')
-async function fetch(url,options,timeout=5000) {
+async function fetch(url,options,timeout=15000) {
   console.log('fetch',url);
   options.headers['user-agent'] = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/86.0.4240.0 Safari/537.36"
   options.headers['cookie'] = await jar.getCookieString('https://tsfs.forest.gov.tw/')
@@ -402,6 +412,7 @@ async function fetch(url,options,timeout=5000) {
     response = await got(url,options)
   } catch (error) {
     console.log("ERROR",error);
+    DiscordHook.err("ERROR",url);
     DiscordHook.err("ERROR",error.stack.substring(0, 1024));
   }
   response.text = ()=>{
@@ -443,21 +454,58 @@ async function search() {
     year: document.querySelector('#year').value,
     month: document.querySelector('#month').value,
     day: document.querySelector('#day').value,
-    count: document.querySelector('#count').value,
+    count110: document.querySelector('#count110').value,
+    count108: document.querySelector('#count108').value,
+    roomType: document.querySelector('input[name="roomType"]:checked').value,
     autobook: document.querySelector('#autobook').checked,
     retry: document.querySelector('#retry').checked,
   }; r`);
   let year = res.year; 
   let month = res.month; 
   let day = res.day; 
-  let count = res.count;
+  let count110 = res.count110;
+  let count108 = res.count108;
+  let roomType = res.roomType;
   let autobook = res.autobook; 
   let retry = res.retry;
-  console.log({day,month,year,count,autobook,retry});
+  console.log({day,month,year,count110,count108,roomType,autobook,retry});
   // let year = dateEdit.date().year();
   // let month = dateEdit.date().month();
   // let day = dateEdit.date().day();
   console.log('search',year,month,day);
+  if(isNaN(year)){
+    label2.setText("請選年月日!")
+    return
+  }
+  console.log(1);
+  if(isNaN(month)){
+    label2.setText("請選年月日!")
+    return
+  }
+  console.log(1);
+  if(isNaN(day)){
+    label2.setText("請選年月日!")
+    return
+  }
+  console.log(1);
+  if(roomType == '108'){
+    if(count108 == '0'){
+      label3.setText('選間數!');
+      return
+    }
+    count110 = '0';
+  }
+  console.log(1);
+  if(roomType == '110'){
+    if(count110 == '0'){
+      label3.setText('選間數!');
+      return
+    }
+    count108='0';
+    
+  }
+  console.log(2);
+  console.log("https://tsfs.forest.gov.tw/cht/index.php?act=resveration&code=step5&year="+year+"&m="+month);
   let body = await fetch("https://tsfs.forest.gov.tw/cht/index.php?act=resveration&code=step5&year="+year+"&m="+month, {
     "headers": {
       "accept": "text/html,application/xhtml+xml,application/xml;q=0.9,image/avif,image/webp,image/apng,*/*;q=0.8,application/signed-exchange;v=b3;q=0.9",
@@ -501,25 +549,25 @@ async function search() {
     label2.setText(month+'/'+day+'/'+year+' '+'松雪樓客滿')
   }
   let m4 = text.match(/松雪樓:4人套房:[0-9]+間/g);
-  if(m4){
+  if(m4 && roomType == '110'){
     label2.setText(month+'/'+day+'/'+year+' '+m4[0]);
     try {
       fs.writeFileSync('vacacy4.html',html);
     } catch { }
     
     if(autobook){
-      await reserve1(month,day,year,count);
+      await reserve1({month,day,year,count110,count108,roomType});
       return
     }
   }
   let m2 = text.match(/松雪樓:景觀2人:[0-9]+間/g);
-  if(m2){
+  if(m2 && roomType == '108'){
     label2.setText(month+'/'+day+'/'+year+' '+m2[0]);
     try {
       fs.writeFileSync('vacacy2.html',html);
     } catch { }
     if(autobook){
-      await reserve1(month,day,year,count);
+      await reserve1({month,day,year,count110,count108,roomType});
       return
     }
   }
@@ -574,12 +622,14 @@ async function step6({month,day,year}) {
   
 }
 
-async function reserve1(month,day,year, count ='1') {
+async function reserve1({month,day,year,count110,count108,roomType}) {
+  
   await step6({month,day,year})
   label3.setText('訂房中...');
   let postbody = [
     // encodeURIComponent(`room_nums[${year}-${month}-${day}][110]`)+"=1",   
-    encodeURIComponent(`room_nums[${year}-${month}-${day}][110]`)+"="+count,   
+    encodeURIComponent(`room_nums[${year}-${month}-${day}][110]`)+"="+count110,
+    encodeURIComponent(`room_nums[${year}-${month}-${day}][108]`)+"="+count108,
     encodeURIComponent(`room_nums[${year}-${month}-${day}][116]`)+"=0", 
     "x=93",
      "y=14"
@@ -634,6 +684,8 @@ async function reserveconfirm(argument) {
   let html = await body.text()
   if(html.includes('訂購失敗')){
     label3.setText('訂購失敗!!!!')
+  }else{
+    label3.setText('成功')
   }
   fs.writeFileSync('reserveconfirm.html',html)
   bookSuccess=true;
